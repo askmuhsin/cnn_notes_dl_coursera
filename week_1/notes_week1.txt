@@ -1,0 +1,122 @@
+++valid padding
+    n-f+1
+    6x6 * 3x3 --> 4x4
+
+++same padding
+    n+2p-f+1
+    p = f-1 / 2
+
+  # ------------------------------------------------
+
+f is mostly odd.
+    +reasons
+    center position
+    padding whole number
+
+  # ------------------------------------------------
+
+++strided convolution
+    equation
+    nxn * fxf , s=2
+    floor((n+2p-f / s)+1)
+
+cross-correlation vs convolution
+(A*B)*C = A*(B*C)
+
+  # ------------------------------------------------
+
+[[2,3,7,4,6,2],
+[6,6,9,8,7,4],
+[3,4,8,3,8,9],
+[7,8,3,6,6,3],
+[4,2,1,8,3,4],
+[3,2,4,1,9,8]]
+
+[[3,4,5],
+[1,0,2],
+[-1,9,7]]
+
+# ------------------------------------------------
+convolution over volume
+height x width x channel
+    sum of product of
+    corresponding kernel and image slice
+
+# ------------------------------------------------
+Multiple filters.
+  n x n x nc
+  f x f x nc
+
+2 filter can be used for example to detect horizontal and vertical edges.
+
+# ------------------------------------------------
+relu(conv + b)
+
+z[1] = w[1] * a[0] + b[1]
+a[1] = g(z[1])
+
+f[l] = filter size
+p[l] = padding
+s[l] = stride
+
+input = n[l-1] x n[l-1] x nc[l-1]
+output = n[l] x n[l] x nc[l]
+
+n[l] = (n+2p-f)/s + 1
+
+activation = a[l]  --> n[l] x n[l] x nc[l]
+
+A[l]  --> m x n[l] x n[l] x nc[l]
+
+  # ------------------------------------------------
+1. convolution
+2. pooling
+3. fully connected
+  # ------------------------------------------------
+pooling
+  max pooling
+    1 3 2 1
+    2 9 1 1     9 2
+    1 3 2 3     6 3
+    5 6 1 2
+
+works very well
+((n+2p-f)/s)+1
+
+for 3d inputs, the output of pooling operation will have same number of channels.
+
+average pooling --> instead of max
+    1 3 2 1
+    2 9 1 1     3.75 1.25
+    1 3 2 3     4.00 2.00
+    5 6 1 2
+
+7x7x1000 --> 1x1x1000
+f=2, s=2    --> shrinking dimension by a factor of half
+
+mostly no padding
+((n-f)/s)+1
+  # ------------------------------------------------
+
+++parameter sharing
+  for eg a vertical edge detector for one part of the image will do the same work
+  for any other part of the image.
+++sparsity of connections
+  each output value is only dependent on a small number of inputs.
+++translational invariance
+++scale invariance
+
+  # ------------------------------------------------
+  # ------------------------------------------------
+
+  >>> arr_x_pad = np.pad(arr_x, (1,1), 'constant')
+  >>> arr_x_pad
+  array([[ 0,  0,  0,  0,  0],
+         [ 0,  3,  4,  5,  0],
+         [ 0,  1,  0,  2,  0],
+         [ 0, -1,  9,  7,  0],
+         [ 0,  0,  0,  0,  0]])
+
+  # ------------------------------------------------
+  # ------------------------------------------------
+  # ------------------------------------------------

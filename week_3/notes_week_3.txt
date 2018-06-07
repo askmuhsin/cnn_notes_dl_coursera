@@ -1,0 +1,171 @@
+IMAGE DETECTION
+## -----------------------------------------------------------------------------
+image localization
+    classification with localization
+in detection there can be multiple object with multiple classes.
+
+image classification
+    CONVNET --> SOFTMAX
+
+## -----------------------------------------------------------------------------
+imgate localization
+    CONVNET --> SOFTMAX  --> BB (bx, by, bh, bw)
+    (bx, by) midpoint of the BB
+    (bh, bw) height and width of BB
+    0,0-------------1,0
+    |                 |
+    |                 |
+    |                 |
+    0,1-------------1,1
+
+## -----------------------------------------------------------------------------
+LABEL - y
+y = [pc, bx, by, bh, bw, c1, c2, c3]
+    pc --> is there an object
+    c1, c2, c3  --> softmax for 3 object classification
+
+## -----------------------------------------------------------------------------
+Loss fn
+    L(y_hat, y) = (y_hat_1 - y_1)^2 + (y_hat_2 - y_2)^2 + ..... + (y_hat_8 - y_8)^2
+      (if y_1 == 1)
+    L(y_hat, y) = (y_hat_1 - y_1)^2
+      (if y_1 == 0)
+
+note : in practice square error (or something like it) can be used for BB
+        & log likelyhood for c1, c2, c3
+        & logistic regression for pc
+
+## -----------------------------------------------------------------------------
+Landmark detection
+    CONVNET --> SOFTMAX  -->  (lx, ly)
+    (lx, ly) = coodinate the object of interest. eg... left eye in face
+
+People pose detection
+    key position analysis of points of interests. and convert to pose.
+    eg . midpoint of chest, foot, ...
+
+## -----------------------------------------------------------------------------
+OBJECT DETECTION Algo
+  sliding window detection
+    multisize window slided with a stride of choice.
+    every square region is classified
+
+  computationally expensive
+  coarse square strides could decrease the quality of detector
+  sliding window works better with linear classifiers
+
+## -----------------------------------------------------------------------------
+CONVOLUTIONAL Implementation of SLIDING WINDOWS
+  based on OverFeet paper
+    single image region
+    14x14x3 --(5x5)--> 10x10x16  --(max 2x2)--> 5x5x16  --(5x5)--> 1x1x400
+                                      --(1x1)-->  1x1x400  --(1x1)-->  1x1x4
+    with conv sliding over complete image
+    28x28x3 --(5x5)--> 24x24x16  --(max 2x2)--> 12x12x16  --(5x5)--> 8x8x400
+                                      --(1x1)-->  8x8x400  --(1x1)-->  8x8x4
+
+    The 8x8x4 output will have info of all the individual sliding windows.
+
+This method although computationally much efficient, might not produce the best
+BB results.
+
+## -----------------------------------------------------------------------------
+YOLO algoirthm
+  assume a grid over image (eg a 3x3 grid)
+  for each grid cell
+    y = [pc, bx, by, bh, bw, c1, c2, c3]    # 8 fields
+  Target output volume --> 3x3x8
+  In practice a finer grid cell is implemented like 19x19 making the Target -> 19x19x8
+
+## -----------------------------------------------------------------------------
+in YOLO bx, by, bh, bw are represented as follows:
+    bx, by --> are represented relative to the assigned grid of the object.
+    bh, bw --> are represented as the percentage of length and width of the grid cell.
+    This makes all the 4 params to be likely between 1 and 0
+
+## -----------------------------------------------------------------------------
+Intersection over Union
+    two BBs in question, the ground truth, and model prediction
+    U = union is the area in either BBs combined
+    I = intersection is the area exclusive between two BBs.
+
+    IoU = I/U
+
+    Correct if IoU>=0.5
+    If the prediction is perfect overlap the IoU will be 1
+
+## -----------------------------------------------------------------------------
+Non-max Suppression
+    Detecting objects only once is
+    probabilites associated to each detection.
+    take the BBs with highest probability.
+  Non-max means the highest probabilities are kept and the rest suppressed.
+
+## -----------------------------------------------------------------------------
+Algo steps.
+    1. for a 19x19 grid get the output of 19x19x5 (only 1 class, pc, bx, by, bh ,bw)
+    2. get rid of pc<=0.6
+    3. pick the box with the largest pc output as a prediction
+    4. Discard any remaining box with high IoU (>=0.5) which has overlap with the prev step.
+
+## -----------------------------------------------------------------------------
+With YOLO so far one of the challenges is that each grid cell can only detect 1
+object, inorder to detect multiple objects Anchor boxes can be used.
+ANCHOR BOXES.
+    Use multiple anchor boxes with varying geometry
+    y = [pc, bx, by, bh, bw, c1, c2, c3, pc, bx, by, bh, bw, c1, c2, c3]
+
+Some issues with this approach:
+    if objects in same grid is more than 2.
+    if objects in grid have the same anchor geometry.
+
+Anchor boxes also help the model to SPECIALIZE, that is to capture information like
+a pedestrian will be tall and skinny, and car wide and short, so on...
+
+Normally 5 or 7 anchor boxes are manually chosen.
+A better approach is to use a kMeans algo for deciding the anchor boxes from the given dataset.
+
+## -----------------------------------------------------------------------------
+THE YOLO ALGO
+  1. The training set.
+      choose Grid cells           (eg 3x3)
+      choose # of Classes         (eg 3; pedestrian, car, motorcycle)
+      choose # of anchor boxes    (eg 2)
+      SO y (label) dimension --> 3x3x2x8
+      y = [pc, bx, by, bh, bw, c1, c2, c3, pc, bx, by, bh, bw, c1, c2, c3]
+      (the upper portion and lower portion associates to an anchor box geometry,
+      and needs to be consistent)
+      Go through each grid of each image and annotate corresponding y (label)
+
+  2. Once the labeled data is ready, TRAINING car start on a model.
+      The model will take in an image of GIVEN dimension and output TARGET.
+      eg. 100x100x3   --(model with conv, max and other layers)--> 3x3x16
+
+  3. Making predictions
+      if pc is 0 the rest of params does not matter.
+      if pc is 1, then bx,by,bh,bw, and class will be provided.
+        Get rid of the low prob predictions.
+        Independently run Non-max suppression for each class.
+
+## -----------------------------------------------------------------------------
+What algos like YOLO does is to apply the convolution (of slidingWindow) is
+implemented on the whole image. Most of the image might not have any feature
+of interest.
+REGION PROPOSAL
+    R-CNN, implements a segmentation algorithm.
+    this algo finds blobs (~2000) and only run BBs checks on those blobs.
+  R-CNN (regional CNN)
+    Propose regions, classify proposed regions one at a time.
+    Output label + bounding box.
+R-CNN is slow.
+    Fast R-CNN is implemented as a solution.
+      Propose regions, use convolution implementation of sliding windows to
+      classify all the proposed region.
+    Faster R-CNN
+      Is even faster than Fast R-CNN but not as fast as YOLO.
+      This is achieved by using a CNN to propose regions (blobs).
+
+## -----------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
+## -----------------------------------------------------------------------------

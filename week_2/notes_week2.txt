@@ -1,0 +1,67 @@
+#----------------------------------------------------------
+Casestudies
+  leNet
+  alexnet
+  vgg
+  resnet
+  inception
+#----------------------------------------------------------
+Lenet
+  60k params
+AlexNet
+  60M params
+VGG-16
+  138M params
+#----------------------------------------------------------
+Residual block
+ResNet
+skip connection
+
+ResNet works because it does not hurt performance, because of identity fn.
+when used with RELU
+
+#----------------------------------------------------------
+1 X 1 convolution
+Network in Network
+
+To shrink dimension pooling can be used; But to shrink channels 1X1 can be used.
+
+28x28x192 --> (x32 - Conv 1x1) --> 28x28x32
+#----------------------------------------------------------
+inception
+    computational cost! (one 5x5 costs about 120M operations)
+    reduce complexity by using 1X1 convolution
+#----------------------------------------------------------
+transfer learning
+    trainable parameter = 0
+    freeze = 1
+    precompute reactivation to speedup
+#----------------------------------------------------------
+Data augmentation
+    mirroring         ****
+    random cropping   ****
+    rotation          **
+    shearing          **
+    local warping     *
+    color shifting  (rgb distortion eg, add r&g subtract from b)
+    PCA color augmentation  (if the image mainly RED, augmentation will reduce RED)
+
+Implementation during training
+    use CPU thread for distortion
+
+#--------------------------------------------------------
+State of CV
+    data vs hand-engineered
+Training model knowledge source:
+    labeled data
+    hand engineered features/network architecture/other components
+Ensambling
+    Train several networks independantly and average their outputs
+Multi-crop at test time
+    run classifier on multiple versions of test images and average results
+    10-crop
+    1+4 + 1+4 (ori mirror)
+#----------------------------------------------------------
+#----------------------------------------------------------
+#----------------------------------------------------------
+#----------------------------------------------------------

@@ -1,0 +1,129 @@
+FACE RECOGNITION  // NEURAL STYLE TRANSFORM
+## ----------------------------------------------------------------------------
+liveness detection on top of face detection.
+face verification.
+  1:1 problem
+  INPUT : image, name/ID
+  OUTPUT : is the person is who is claiming to be?
+face recognition
+  1:K problem
+  INPUT : IMAGE
+  OUTPUT : the image belongs to the Kth person, or "not recognized"
+accuracy in the field is above 99.99%.
+
+## ----------------------------------------------------------------------------
+ONE SHOT LEARNING
+  learn from one example to recognize the person again.
+
+solution: similarity function
+  d(img1, img2) = degree of difference between images.
+
+## ----------------------------------------------------------------------------
+SIAMESE NETWORK
+  f(x(1)) --> encoding [Last layer of a convnet]
+  d(x(1), x(2)) = ||f(x(1)) - f(x(2))||^2
+
+  f(x(i)) --> 128 dimensions
+Based on DeepFace paper.
+
+  Learn parameters such that is two input pictures are the same then the distance
+  between their encoded output should be small. if pictures belong the different
+  people the distance should be large.
+
+## ----------------------------------------------------------------------------
+TRIPLET LOSS fn.
+  Anchor image  (A)
+  Positive image(P)
+  Negative image(N)
+  Triplet loss, looking at three images.
+
+Based on FaceNet paper.
+
+  Formalized as :
+      ||f(x(A)) - f(x(P))||^2   <=    ||f(x(A)) - f(x(N))||^2
+          d(A, P)                           d(A,N)
+
+      ||f(x(A)) - f(x(P))||^2   -    ||f(x(A)) - f(x(N))||^2    <=    0
+
+      issue: The above loss can be satisfied by the NN if all the encoding is 0,
+      or the by making d(A, P), d(A, N) always to zero.
+
+      solution: rather than set the loss function to be "<= 0" set it to something
+      even much smaller, say "<=0 - alpha". so alpha is one more hyperparameter.
+
+      Rewriting loss with alpha (margin)
+      ||f(x(A)) - f(x(P))||^2  - ||f(x(A)) - f(x(N))||^2  + ALPHA   <=  0
+
+      L (A, P, N) =  max(||f(x(A)) - f(x(P))||^2  - ||f(x(A)) - f(x(N))||^2  + ALPHA, 0)
+
+      Overall loss on training set
+      I = sumOf(L (A(i), P(i), N(i)))
+
+## ----------------------------------------------------------------------------
+Training set : 10k pictures of 1k person (Require multiple pictures of the same person)
+Note: Once trained, in production it would only require one picture of the candidate.
+
+issue : the chosen triplet if picked random might not produce a good network
+require : pick hard to train triplets.
+
+Commercial dataset uses over 100M datasets.
+
+## ----------------------------------------------------------------------------
+Face verification and binary classification
+precompute parameters for faster implementation.
+
+## ----------------------------------------------------------------------------
+NEURAL STYLE TRANSFORM
+  content image (C)
+  style image   (S)
+  generate image(G)
+
+Based on paper by Justin Johnson (2015).
+
+## ----------------------------------------------------------------------------
+Deep ConvNet Learning/ Visualizing hidden layers
+  STEP 1. pass the training data, and identify the image patches that maximizes
+  unit's activation. say top 9 image patches.
+  STEP 2. Repeat for other units.
+
+  In deeper layers the hidden unit will see a larger patch of the image.
+
+Based on paper by Zeiler and Fergus (2013)
+
+## ----------------------------------------------------------------------------
+Cost function; NEURAL STYLE TRANSFORM
+  J(G) --> Loss fn
+  J_content(C, G) --> how similar is the content to generated
+  J_style(S, G)   --> how similar are the styles of generated and style
+
+  J(G) = ALPHA * J_content(C, G) + BETA * J_style(S, G)
+
+## ----------------------------------------------------------------------------
+Algorithm; NEURAL STYLE TRANSFORM
+  Step 1 : Initially generate G randomly  (White noise)
+            G - 100x100x3
+  Step 2 : Use gradient descent to minimize J(G)
+            G := G - d/dG (J(G))
+
+## ----------------------------------------------------------------------------
+Content cost function
+Style cost function
+  correlation bw channels of a hidden layer l.
+  Compute style matrix.
+
+Gram matrix.
+Based on paper by Gatys et al(2015)
+
+## ----------------------------------------------------------------------------
+1D and 3D GENERALIZATION
+  EEG --> 1D data, time-series, voltage at each instance of time.
+    14x1    --(5x1, 16 filters)-->  10x16
+
+  CT Scan --> 3D data
+    14x14x14  --(5x5x5, 16 filters)-->  10x10x10x16
+  Videos/Movies --> 3D data
+
+## ----------------------------------------------------------------------------
+## ----------------------------------------------------------------------------
+## ----------------------------------------------------------------------------
+## ----------------------------------------------------------------------------
